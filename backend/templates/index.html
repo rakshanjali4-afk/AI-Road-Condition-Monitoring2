@@ -1,0 +1,836 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>RoadSense AI | Road Condition Monitoring</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<!-- ================= NAVBAR ================= -->
+
+<nav class="navbar">
+
+    <a href="/" class="brand">
+        <div class="brand-mark">
+            <span>RS</span>
+        </div>
+
+        <div class="brand-text">
+            <strong>RoadSense AI</strong>
+            <small>Intelligent Road Monitoring</small>
+        </div>
+    </a>
+
+    <div class="nav-links">
+        <a href="#home">Home</a>
+        <a href="#analyzer">Analyze</a>
+        <a href="#features">Features</a>
+        <a href="#workflow">How It Works</a>
+        <a href="#about">About</a>
+    </div>
+
+    <a href="#analyzer" class="nav-button">
+        Start Analysis
+    </a>
+
+</nav>
+
+
+<!-- ================= HERO ================= -->
+
+<section class="hero" id="home">
+
+    <div class="hero-copy">
+
+        <div class="eyebrow">
+            <span class="pulse-dot"></span>
+            AI-POWERED ROAD INSPECTION
+        </div>
+
+        <h1>
+            See the road.
+            <span>Understand it.</span>
+        </h1>
+
+        <p class="hero-description">
+            An intelligent computer-vision system that analyzes
+            road images and detects road-related conditions using
+            a trained YOLO11n model.
+        </p>
+
+        <div class="hero-actions">
+
+            <a href="#analyzer" class="btn btn-primary">
+                Analyze a Road
+                <span>→</span>
+            </a>
+
+            <a href="#workflow" class="btn btn-ghost">
+                Explore System
+            </a>
+
+        </div>
+
+        <div class="hero-metrics">
+
+            <div class="metric">
+                <strong>YOLO11n</strong>
+                <span>Detection Model</span>
+            </div>
+
+            <div class="metric">
+                <strong>6</strong>
+                <span>Detection Classes</span>
+            </div>
+
+            <div class="metric">
+                <strong>AI</strong>
+                <span>Visual Analysis</span>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- AI VISUAL -->
+
+    <div class="hero-visual">
+
+        <div class="ai-window">
+
+            <div class="window-top">
+
+                <div class="window-status">
+                    <span class="pulse-dot"></span>
+                    SYSTEM ONLINE
+                </div>
+
+                <span class="window-model">
+                    YOLO11n
+                </span>
+
+            </div>
+
+
+            <div class="road-scene">
+
+                <div class="scene-sky"></div>
+                <div class="scene-road"></div>
+
+                <div class="scene-road-line line-a"></div>
+                <div class="scene-road-line line-b"></div>
+
+                <div class="scene-car car-a"></div>
+                <div class="scene-car car-b"></div>
+                <div class="scene-car car-c"></div>
+
+                <div class="ai-box box-a">
+                    <label>LMV</label>
+                </div>
+
+                <div class="ai-box box-b">
+                    <label>ROAD AREA</label>
+                </div>
+
+                <div class="scan-beam"></div>
+
+                <div class="scan-text">
+                    ANALYZING ROAD SCENE...
+                </div>
+
+            </div>
+
+
+            <div class="window-footer">
+
+                <div>
+                    <span>Confidence</span>
+                    <strong>92.4%</strong>
+                </div>
+
+                <div>
+                    <span>Status</span>
+                    <strong class="online">
+                        ● Ready
+                    </strong>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ================= QUICK FEATURES ================= -->
+
+<section class="quick-section">
+
+    <div class="quick-card">
+        <span class="quick-icon">⚡</span>
+        <div>
+            <strong>Fast Analysis</strong>
+            <p>AI-powered image inspection</p>
+        </div>
+    </div>
+
+    <div class="quick-card">
+        <span class="quick-icon">◈</span>
+        <div>
+            <strong>Visual Detection</strong>
+            <p>Bounding-box based results</p>
+        </div>
+    </div>
+
+    <div class="quick-card">
+        <span class="quick-icon">✓</span>
+        <div>
+            <strong>Clear Results</strong>
+            <p>Easy-to-understand dashboard</p>
+        </div>
+    </div>
+
+</section>
+
+
+<!-- ================= ANALYZER ================= -->
+
+<section class="analyzer-section" id="analyzer">
+
+    <div class="section-heading">
+
+        <span>AI ROAD ANALYZER</span>
+
+        <h2>Inspect a road image</h2>
+
+        <p>
+            Upload a clear image and let RoadSense AI
+            analyze the scene.
+        </p>
+
+    </div>
+
+
+    <div class="analyzer-card">
+
+        <form action="/predict"
+              method="POST"
+              enctype="multipart/form-data"
+              id="uploadForm">
+
+            <div class="drop-zone" id="dropZone">
+
+                <div class="upload-circle">
+                    ↑
+                </div>
+
+                <h3>
+                    Drop your road image here
+                </h3>
+
+                <p>
+                    Drag & drop or choose an image from your device
+                </p>
+
+                <input
+                    type="file"
+                    id="imageInput"
+                    name="image"
+                    accept=".jpg,.jpeg,.png"
+                    required
+                >
+
+                <label
+                    for="imageInput"
+                    class="choose-button">
+                    Choose Image
+                </label>
+
+                <div id="fileDetails"
+                     class="file-details">
+                    JPG, JPEG or PNG · Maximum 10 MB
+                </div>
+
+            </div>
+
+
+            <!-- PREVIEW -->
+
+            <div class="preview-panel" id="previewPanel">
+
+                <div class="preview-top">
+
+                    <div>
+                        <span>SELECTED IMAGE</span>
+
+                        <strong id="selectedName">
+                            image.jpg
+                        </strong>
+                    </div>
+
+                    <button
+                        type="button"
+                        id="removeButton"
+                        class="remove-button">
+                        Remove
+                    </button>
+
+                </div>
+
+                <div class="preview-image-box">
+
+                    <img
+                        id="imagePreview"
+                        src=""
+                        alt="Road image preview">
+
+                </div>
+
+            </div>
+
+
+            <!-- ANALYZE BUTTON -->
+
+            <button
+                type="submit"
+                class="analyze-button"
+                id="analyzeButton">
+
+                <span class="button-icon">✦</span>
+
+                <span id="buttonText">
+                    Analyze Road
+                </span>
+
+                <span id="buttonArrow">
+                    →
+                </span>
+
+            </button>
+
+
+            <!-- PROCESSING -->
+
+            <div
+                class="processing-box"
+                id="processingBox">
+
+                <div class="processing-spinner"></div>
+
+                <div>
+                    <strong>
+                        AI is analyzing the road...
+                    </strong>
+
+                    <span>
+                        Detecting road conditions and objects
+                    </span>
+                </div>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</section>
+
+
+<!-- ================= FEATURES ================= -->
+
+<section class="features-section" id="features">
+
+    <div class="section-heading">
+
+        <span>AI CAPABILITIES</span>
+
+        <h2>What the system detects</h2>
+
+        <p>
+            RoadSense AI uses the trained dataset classes
+            to identify visual objects and road conditions.
+        </p>
+
+    </div>
+
+
+    <div class="feature-grid">
+
+        <article class="feature-card damage">
+
+            <div class="feature-symbol">!</div>
+
+            <div>
+                <span>01</span>
+                <h3>Road Damage</h3>
+
+                <p>
+                    Detect road-damage regions represented
+                    in the trained dataset.
+                </p>
+            </div>
+
+        </article>
+
+
+        <article class="feature-card bump">
+
+            <div class="feature-symbol">~</div>
+
+            <div>
+                <span>02</span>
+                <h3>Speed Bump</h3>
+
+                <p>
+                    Identify speed-bump objects in
+                    road scenes.
+                </p>
+            </div>
+
+        </article>
+
+
+        <article class="feature-card unsurfaced">
+
+            <div class="feature-symbol">▰</div>
+
+            <div>
+                <span>03</span>
+                <h3>Unsurfaced Road</h3>
+
+                <p>
+                    Identify unsurfaced road conditions.
+                </p>
+            </div>
+
+        </article>
+
+
+        <article class="feature-card vehicle">
+
+            <div class="feature-symbol">○</div>
+
+            <div>
+                <span>04</span>
+                <h3>Vehicles</h3>
+
+                <p>
+                    Detect LMVs and HMVs in the
+                    road scene.
+                </p>
+            </div>
+
+        </article>
+
+    </div>
+
+</section>
+
+
+<!-- ================= WORKFLOW ================= -->
+
+<section class="workflow-section" id="workflow">
+
+    <div class="section-heading">
+
+        <span>WORKFLOW</span>
+
+        <h2>From image to insight</h2>
+
+        <p>
+            A simple automated inspection pipeline.
+        </p>
+
+    </div>
+
+
+    <div class="workflow-grid">
+
+        <div class="workflow-card">
+
+            <div class="workflow-number">
+                01
+            </div>
+
+            <div class="workflow-icon">
+                ↑
+            </div>
+
+            <h3>Upload</h3>
+
+            <p>
+                Select or drag a road image into
+                the analyzer.
+            </p>
+
+        </div>
+
+
+        <div class="workflow-arrow">
+            →
+        </div>
+
+
+        <div class="workflow-card">
+
+            <div class="workflow-number">
+                02
+            </div>
+
+            <div class="workflow-icon">
+                ✦
+            </div>
+
+            <h3>AI Detection</h3>
+
+            <p>
+                Your trained YOLO11n model analyzes
+                the uploaded image.
+            </p>
+
+        </div>
+
+
+        <div class="workflow-arrow">
+            →
+        </div>
+
+
+        <div class="workflow-card">
+
+            <div class="workflow-number">
+                03
+            </div>
+
+            <div class="workflow-icon">
+                ✓
+            </div>
+
+            <h3>Results</h3>
+
+            <p>
+                Review detections, confidence and
+                road condition.
+            </p>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ================= ABOUT ================= -->
+
+<section class="about-section" id="about">
+
+    <div class="about-grid">
+
+        <div>
+
+            <span class="section-label">
+                ABOUT THE PROJECT
+            </span>
+
+            <h2>
+                Computer vision for
+                intelligent road monitoring.
+            </h2>
+
+        </div>
+
+
+        <div>
+
+            <p>
+                RoadSense AI is an academic prototype for
+                AI-assisted road inspection. The system combines
+                a trained YOLO11n object-detection model with
+                a Flask web application to analyze road images
+                and present understandable visual results.
+            </p>
+
+            <div class="technology-tags">
+
+                <span>YOLO11n</span>
+                <span>Python</span>
+                <span>Flask</span>
+                <span>OpenCV</span>
+                <span>Computer Vision</span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ================= FOOTER ================= -->
+
+<footer>
+
+    <div class="footer-brand">
+
+        <div class="brand-mark small">
+            <span>RS</span>
+        </div>
+
+        <div>
+            <strong>RoadSense AI</strong>
+            <span>AI-Based Road Condition Monitoring</span>
+        </div>
+
+    </div>
+
+    <p>
+        Academic Project Prototype · 2026
+    </p>
+
+</footer>
+
+
+<script>
+
+const imageInput =
+    document.getElementById("imageInput");
+
+const dropZone =
+    document.getElementById("dropZone");
+
+const previewPanel =
+    document.getElementById("previewPanel");
+
+const imagePreview =
+    document.getElementById("imagePreview");
+
+const selectedName =
+    document.getElementById("selectedName");
+
+const fileDetails =
+    document.getElementById("fileDetails");
+
+const removeButton =
+    document.getElementById("removeButton");
+
+const uploadForm =
+    document.getElementById("uploadForm");
+
+const analyzeButton =
+    document.getElementById("analyzeButton");
+
+const buttonText =
+    document.getElementById("buttonText");
+
+const processingBox =
+    document.getElementById("processingBox");
+
+
+function showSelectedImage(file) {
+
+    if (!file) {
+        return;
+    }
+
+    const allowedTypes = [
+        "image/jpeg",
+        "image/png"
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+
+        alert(
+            "Please choose a JPG, JPEG or PNG image."
+        );
+
+        imageInput.value = "";
+
+        return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+
+        alert(
+            "The image must be smaller than 10 MB."
+        );
+
+        imageInput.value = "";
+
+        return;
+    }
+
+
+    const reader =
+        new FileReader();
+
+
+    reader.onload = function(event) {
+
+        imagePreview.src =
+            event.target.result;
+
+        selectedName.textContent =
+            file.name;
+
+        fileDetails.textContent =
+            "Image ready for AI analysis";
+
+        previewPanel.style.display =
+            "block";
+
+        dropZone.classList.add(
+            "has-file"
+        );
+
+    };
+
+
+    reader.readAsDataURL(file);
+}
+
+
+imageInput.addEventListener(
+    "change",
+    function() {
+
+        showSelectedImage(
+            this.files[0]
+        );
+
+    }
+);
+
+
+/* Drag and drop */
+
+dropZone.addEventListener(
+    "dragover",
+    function(event) {
+
+        event.preventDefault();
+
+        dropZone.classList.add(
+            "dragging"
+        );
+
+    }
+);
+
+
+dropZone.addEventListener(
+    "dragleave",
+    function() {
+
+        dropZone.classList.remove(
+            "dragging"
+        );
+
+    }
+);
+
+
+dropZone.addEventListener(
+    "drop",
+    function(event) {
+
+        event.preventDefault();
+
+        dropZone.classList.remove(
+            "dragging"
+        );
+
+        const file =
+            event.dataTransfer.files[0];
+
+        if (!file) {
+            return;
+        }
+
+        const transfer =
+            new DataTransfer();
+
+        transfer.items.add(file);
+
+        imageInput.files =
+            transfer.files;
+
+        showSelectedImage(file);
+
+    }
+);
+
+
+/* Remove */
+
+removeButton.addEventListener(
+    "click",
+    function() {
+
+        imageInput.value = "";
+
+        imagePreview.src = "";
+
+        selectedName.textContent =
+            "image.jpg";
+
+        fileDetails.textContent =
+            "JPG, JPEG or PNG · Maximum 10 MB";
+
+        previewPanel.style.display =
+            "none";
+
+        dropZone.classList.remove(
+            "has-file"
+        );
+
+    }
+);
+
+
+/* Submit */
+
+uploadForm.addEventListener(
+    "submit",
+    function() {
+
+        if (!imageInput.files.length) {
+
+            alert(
+                "Please choose a road image first."
+            );
+
+            return;
+
+        }
+
+        analyzeButton.disabled =
+            true;
+
+        buttonText.textContent =
+            "Analyzing...";
+
+        processingBox.style.display =
+            "flex";
+
+        dropZone.classList.add(
+            "processing"
+        );
+
+    }
+);
+
+</script>
+
+</body>
+</html>
