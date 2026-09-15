@@ -11,7 +11,7 @@ app = Flask(__name__)
 CORS(app)
 
 # Load trained YOLO model
-model = YOLO("runs/detect/train/weights/best.pt")
+model = YOLO("best_new.pt")
 
 # Upload folder
 UPLOAD_FOLDER = "static/uploads"
@@ -51,11 +51,8 @@ def predict():
     image.save(image_path)
 
     # Run YOLO detection
-    results = model.predict(
-        source=image_path,
-        conf=0.25,
-        save=False
-    )
+    results = model.predict(source=image_path, conf=0.25, save=False)
+    
 
     result = results[0]
 
