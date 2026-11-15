@@ -4,3 +4,29 @@ __pycache__/
 *.pyc
 *.log
 .env
+# Generated images
+backend/static/uploads/
+
+# YOLO output files
+runs/
+
+# Backup files
+backend/app_backup.py
+frontend/src/lib/roadCondition_backup.ts
+
+# Environment files
+.env.*
+!.env.example
+# Generated diagnostic outputs
+backend/static/diagnostic_output/
+backend/static/model_comparison/
+
+# Local dataset configuration
+backend/road_data.yaml
+
+# Temporary testing scripts
+backend/compare_models.py
+backend/dry_run.py
+
+# Empty root lockfile
+/package-lock.json

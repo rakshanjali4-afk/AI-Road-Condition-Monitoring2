@@ -21,7 +21,7 @@ interface ConditionConfig {
 const CONDITIONS: Record<ConditionLevel, ConditionConfig> = {
   GOOD: {
     label: "GOOD",
-    description: "No monitored road-problem class was detected in the image.",
+    description: "Positive road condition verified.",
     icon: CheckCircle2,
     gradient: "from-emerald-500 to-emerald-600",
     iconColor: "text-emerald-400",
@@ -32,7 +32,7 @@ const CONDITIONS: Record<ConditionLevel, ConditionConfig> = {
   },
   MODERATE: {
     label: "MODERATE",
-    description: "A monitored road condition was detected in the image.",
+    description: "A monitored road feature (such as a speed bump) was detected.",
     icon: AlertTriangle,
     gradient: "from-amber-500 to-amber-600",
     iconColor: "text-amber-400",
@@ -42,8 +42,8 @@ const CONDITIONS: Record<ConditionLevel, ConditionConfig> = {
     glow: "shadow-amber-500/20",
   },
   BAD: {
-    label: "BAD",
-    description: "A significant monitored road condition was detected in the image.",
+    label: "POOR / UNSAFE",
+    description: "Significant road defect (RoadDamages or UnsurfacedRoad) detected in the image.",
     icon: XCircle,
     gradient: "from-danger-500 to-danger-600",
     iconColor: "text-danger-400",
@@ -52,6 +52,28 @@ const CONDITIONS: Record<ConditionLevel, ConditionConfig> = {
     borderColor: "border-danger-500/30",
     glow: "shadow-danger-500/20",
   },
+  "NEEDS REVIEW": {
+    label: "NEEDS REVIEW",
+    description: "No road defects were detected, but manual review is required to verify road condition.",
+    icon: AlertTriangle,
+    gradient: "from-amber-500 to-amber-600",
+    iconColor: "text-amber-400",
+    textColor: "text-amber-400",
+    bgColor: "bg-amber-500/10",
+    borderColor: "border-amber-500/30",
+    glow: "shadow-amber-500/20",
+  },
+  "ANALYSIS INCONCLUSIVE": {
+    label: "ANALYSIS INCONCLUSIVE",
+    description: "No road defects detected. Detection of vehicles (LMV/HMV) or pedestrians is not evidence of road safety.",
+    icon: AlertTriangle,
+    gradient: "from-amber-500 to-slate-600",
+    iconColor: "text-amber-400",
+    textColor: "text-amber-400",
+    bgColor: "bg-amber-500/10",
+    borderColor: "border-amber-500/30",
+    glow: "shadow-amber-500/20",
+  },
 };
 
 export default function ConditionCard({
@@ -59,7 +81,7 @@ export default function ConditionCard({
 }: {
   condition: ConditionLevel;
 }) {
-  const config = CONDITIONS[condition];
+  const config = CONDITIONS[condition] || CONDITIONS["ANALYSIS INCONCLUSIVE"];
   const Icon = config.icon;
 
   return (

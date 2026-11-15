@@ -20,6 +20,39 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 
+def determine_road_condition(detections):
+    """
+    Evaluates road condition and score based on YOLO detection results.
+
+    Rules:
+    - RoadDamages or UnsurfacedRoad -> Condition: BAD (poor/unsafe).
+      Score is calculated with deductions.
+    - SpeedBump (without damage) -> Condition: MODERATE (caution).
+      Score is calculated with minor deduction.
+    - Only traffic objects (LMV, HMV, Pedestrian) or no detections ->
+      Condition: ANALYSIS INCONCLUSIVE.
+      Traffic detections must not count as evidence that the road is safe.
+      Score is None (unavailable: —/100).
+    """
+    safe_detections = detections if isinstance(detections, list) else []
+
+    damage_count = sum(1 for d in safe_detections if isinstance(d, dict) and d.get("name") == "RoadDamages")
+    unsurfaced_count = sum(1 for d in safe_detections if isinstance(d, dict) and d.get("name") == "UnsurfacedRoad")
+    speed_bump_count = sum(1 for d in safe_detections if isinstance(d, dict) and d.get("name") == "SpeedBump")
+
+    if damage_count > 0 or unsurfaced_count > 0:
+        condition = "BAD"
+        score = max(0, min(100, 100 - (damage_count * 20) - (unsurfaced_count * 20) - (speed_bump_count * 5)))
+    elif speed_bump_count > 0:
+        condition = "MODERATE"
+        score = max(0, min(100, 100 - (speed_bump_count * 5)))
+    else:
+        condition = "ANALYSIS INCONCLUSIVE"
+        score = None
+
+    return condition, score
+
+
 @app.route("/")
 def home():
     return render_template("index.html")
@@ -51,7 +84,7 @@ def predict():
     image.save(image_path)
 
     # Run YOLO detection
-    results = model.predict(source=image_path, conf=0.01, save=False)
+    results = model.predict(source=image_path, conf=0.05, save=False)
     
 
     result = results[0]
@@ -92,41 +125,15 @@ def predict():
             )
         })
 
-
-    # Road condition rule
-    detected_classes = [
-        detection["name"]
-        for detection in detections
-    ]
-
-
-    if "UnsurfacedRoad" in detected_classes:
-
-        condition = "BAD"
-
-    elif "RoadDamages" in detected_classes:
-
-        condition = "BAD"
-
-    elif "SpeedBump" in detected_classes:
-
-        condition = "MODERATE"
-
-    else:
-
-        condition = "GOOD"
-
+    # Evaluate road condition and score
+    condition, score = determine_road_condition(detections)
 
     # Send JSON response
     return jsonify({
-
         "condition": condition,
-
-        "image_url":
-            f"/static/uploads/{output_name}",
-
+        "score": score,
+        "image_url": f"/static/uploads/{output_name}",
         "detections": detections
-
     })
 
 

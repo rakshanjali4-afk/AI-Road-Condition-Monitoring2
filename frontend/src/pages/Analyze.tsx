@@ -6,6 +6,12 @@ import {
 } from "react";
 import jsPDF from "jspdf";
 
+import {
+  computeRoadScore,
+  normalizeCondition,
+  getConditionPresentation,
+} from "@/lib/roadCondition";
+
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:5000";
 
@@ -18,13 +24,14 @@ type AnalysisResult = {
   condition: string;
   image_url: string;
   detections: Detection[];
+  score?: number | null;
 };
 
 type ScanHistoryItem = {
   id: string;
   date: string;
   condition: string;
-  score: number;
+  score: number | null;
   detections: string[];
 };
 
@@ -178,39 +185,19 @@ function Analyze() {
          SAVE HISTORY
       ===================================================== */
 
-      const roadDamage =
-        data.detections.filter(
-          (item) => item.name === "RoadDamages"
-        ).length;
-
-      const unsurfaced =
-        data.detections.filter(
-          (item) => item.name === "UnsurfacedRoad"
-        ).length;
-
-      const speedBumps =
-        data.detections.filter(
-          (item) => item.name === "SpeedBump"
-        ).length;
-
-      let score = 100;
-
-      score -= roadDamage * 20;
-      score -= unsurfaced * 20;
-      score -= speedBumps * 5;
-
-      score = Math.max(
-        0,
-        Math.min(100, score)
+      const historyScore = computeRoadScore(
+        data.detections,
+        data.condition,
+        data.score
       );
 
       const historyItem: ScanHistoryItem = {
         id: Date.now().toString(),
         date: new Date().toLocaleString(),
         condition: data.condition,
-        score,
-        detections: data.detections.map(
-          (item) => item.name
+        score: historyScore,
+        detections: (data.detections || []).map(
+          (item) => item?.name || "Unknown"
         ),
       };
 
@@ -241,23 +228,24 @@ function Analyze() {
   ========================================================= */
 
   const getCount = (className: string) => {
-    if (!result) return 0;
+    if (!result || !Array.isArray(result.detections)) return 0;
 
     return result.detections.filter(
       (detection) =>
-        detection.name === className
+        detection?.name === className
     ).length;
   };
 
   const totalObjects =
-    result?.detections.length || 0;
+    result?.detections?.length || 0;
 
   const averageConfidence =
     result &&
+    Array.isArray(result.detections) &&
     result.detections.length > 0
       ? result.detections.reduce(
           (sum, detection) =>
-            sum + detection.confidence,
+            sum + (detection?.confidence || 0),
           0
         ) / result.detections.length
       : 0;
@@ -275,18 +263,13 @@ function Analyze() {
      ROAD CONDITION SCORE
   ========================================================= */
 
-  const calculateConditionScore = () => {
-    if (!result) return 0;
+  const calculateConditionScore = (): number | null => {
+    if (!result) return null;
 
-    let score = 100;
-
-    score -= roadDamageCount * 20;
-    score -= unsurfacedRoadCount * 20;
-    score -= speedBumpCount * 5;
-
-    return Math.max(
-      0,
-      Math.min(100, score)
+    return computeRoadScore(
+      result.detections,
+      result.condition,
+      result.score
     );
   };
 
@@ -294,53 +277,28 @@ function Analyze() {
     calculateConditionScore();
 
   /* =========================================================
-     CONDITION
+     CONDITION PRESENTATION
   ========================================================= */
 
+  const conditionPresentation =
+    getConditionPresentation(
+      result?.condition,
+      conditionScore
+    );
+
   const getConditionColor = () => {
-    if (!result) {
-      return "text-gray-400";
-    }
-
-    if (result.condition === "BAD") {
-      return "text-red-400";
-    }
-
-    if (result.condition === "MODERATE") {
-      return "text-yellow-400";
-    }
-
-    return "text-emerald-400";
+    if (!result) return "text-gray-400";
+    return conditionPresentation.colorClass;
   };
 
   const getConditionBackground = () => {
-    if (!result) {
-      return "bg-gray-500/10 border-gray-500/20";
-    }
-
-    if (result.condition === "BAD") {
-      return "bg-red-500/10 border-red-500/20";
-    }
-
-    if (result.condition === "MODERATE") {
-      return "bg-yellow-500/10 border-yellow-500/20";
-    }
-
-    return "bg-emerald-500/10 border-emerald-500/20";
+    if (!result) return "bg-gray-500/10 border-gray-500/20";
+    return conditionPresentation.bgClass;
   };
 
   const getConditionLabel = () => {
     if (!result) return "Ready";
-
-    if (result.condition === "BAD") {
-      return "Poor";
-    }
-
-    if (result.condition === "MODERATE") {
-      return "Moderate";
-    }
-
-    return "Excellent";
+    return conditionPresentation.label;
   };
 
   /* =========================================================
@@ -443,7 +401,11 @@ function Analyze() {
     );
 
     pdf.text(
-      `Condition Score: ${conditionScore}/100`,
+      `Condition Score: ${
+        conditionScore !== null
+          ? `${conditionScore}/100`
+          : "—/100 (Inconclusive - No road defects detected)"
+      }`,
       20,
       65
     );
@@ -498,7 +460,7 @@ function Analyze() {
 
     if (roadDamageCount > 0) {
       pdf.text(
-        "• Road damage detected. Further inspection may be required.",
+        "• Road damage detected: POOR / UNSAFE condition. Inspection/repair required.",
         25,
         y
       );
@@ -508,7 +470,7 @@ function Analyze() {
 
     if (unsurfacedRoadCount > 0) {
       pdf.text(
-        "• Unsurfaced road detected. Maintenance may be required.",
+        "• Unsurfaced road detected: POOR surface condition. Caution advised.",
         25,
         y
       );
@@ -518,7 +480,7 @@ function Analyze() {
 
     if (speedBumpCount > 0) {
       pdf.text(
-        "• Speed bump detected. Drivers should maintain appropriate speed.",
+        "• Speed bump detected: MODERATE condition. Drivers should maintain safe speed.",
         25,
         y
       );
@@ -532,7 +494,15 @@ function Analyze() {
       speedBumpCount === 0
     ) {
       pdf.text(
-        "• No road-condition anomaly detected by the current model.",
+        "• Analysis Inconclusive: No road-condition defects detected by model.",
+        25,
+        y
+      );
+
+      y += 8;
+
+      pdf.text(
+        "  Traffic objects (LMV/HMV/Pedestrian) do not confirm road surface safety.",
         25,
         y
       );
@@ -918,19 +888,24 @@ function Analyze() {
                     <div
                       className="relative flex h-36 w-36 items-center justify-center rounded-full"
                       style={{
-                        background: result
-                          ? `conic-gradient(#00e5b0 ${conditionScore * 3.6}deg, rgba(255,255,255,0.08) 0deg)`
-                          : "conic-gradient(#18a6ff 360deg, rgba(255,255,255,0.08) 0deg)",
+                        background: !result
+                          ? "conic-gradient(#18a6ff 360deg, rgba(255,255,255,0.08) 0deg)"
+                          : conditionScore === null
+                          ? "conic-gradient(rgba(245, 158, 11, 0.4) 360deg, rgba(255,255,255,0.08) 0deg)"
+                          : `conic-gradient(${conditionPresentation.accentHex} ${
+                              conditionScore * 3.6
+                            }deg, rgba(255,255,255,0.08) 0deg)`,
                       }}
                     >
                       <div className="flex h-28 w-28 flex-col items-center justify-center rounded-full bg-[#031326]">
                         <span className="text-2xl font-bold">
-                          {conditionScore}
-                          /100
+                          {conditionScore !== null
+                            ? `${conditionScore}/100`
+                            : "—/100"}
                         </span>
 
                         <span className="mt-1 text-xs text-gray-500">
-                          SCORE
+                          {conditionScore !== null ? "SCORE" : "UNAVAILABLE"}
                         </span>
                       </div>
                     </div>
@@ -940,9 +915,9 @@ function Analyze() {
                         className={`flex items-center gap-2 text-xl font-bold ${getConditionColor()}`}
                       >
                         <span>
-                          {result
-                            ? "✓"
-                            : "●"}
+                          {!result
+                            ? "●"
+                            : conditionPresentation.icon}
                         </span>
 
                         <span>
@@ -1150,6 +1125,51 @@ function Analyze() {
                     </p>
                   </div>
 
+                  {/* PROMINENT SAFETY STATUS BANNER */}
+                  <div
+                    className={`mb-6 rounded-xl border p-4 ${
+                      roadDamageCount > 0
+                        ? "border-red-500/40 bg-red-500/10 text-red-200"
+                        : unsurfacedRoadCount > 0
+                        ? "border-red-500/40 bg-red-500/10 text-red-200"
+                        : speedBumpCount > 0
+                        ? "border-yellow-500/40 bg-yellow-500/10 text-yellow-200"
+                        : "border-amber-500/40 bg-amber-500/10 text-amber-200"
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <span className="text-2xl">
+                        {roadDamageCount > 0
+                          ? "⚠️"
+                          : unsurfacedRoadCount > 0
+                          ? "🛣️"
+                          : speedBumpCount > 0
+                          ? "🚧"
+                          : "ℹ️"}
+                      </span>
+                      <div>
+                        <h3 className="font-bold text-white">
+                          {roadDamageCount > 0
+                            ? "Road Damage Warning: Poor / Unsafe Condition"
+                            : unsurfacedRoadCount > 0
+                            ? "Unsurfaced Road Warning: Poor Surface Condition"
+                            : speedBumpCount > 0
+                            ? "Speed Bump Advisory: Moderate Condition"
+                            : "Analysis Inconclusive: Road Condition Not Verified"}
+                        </h3>
+                        <p className="mt-1 text-sm opacity-90">
+                          {roadDamageCount > 0
+                            ? "Severe road damage or potholes detected. Immediate road repair or physical inspection is recommended."
+                            : unsurfacedRoadCount > 0
+                            ? "Unsurfaced/unpaved road detected. Drive with caution due to rough gravel/dirt terrain."
+                            : speedBumpCount > 0
+                            ? "Speed bump detected. Drivers should reduce speed to avoid vehicle damage."
+                            : "No road damage or road-surface defects were detected by the model. Detection of vehicles (LMV/HMV) or pedestrians does NOT verify road safety. A valid score cannot be calculated (—/100). Manual inspection is recommended."}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="grid gap-4 md:grid-cols-3">
                     <SafetyCard
                       title="Road Damage"
@@ -1158,7 +1178,7 @@ function Analyze() {
                       description={
                         roadDamageCount > 0
                           ? "Road damage was detected. This area may require inspection or maintenance."
-                          : "No road damage was detected in this image."
+                          : "No road damage detected by model (vehicle/pedestrian detections do not confirm road quality)."
                       }
                     />
 
@@ -1547,8 +1567,10 @@ function Analyze() {
                                   </p>
 
                                   <p className="font-bold">
-                                    {scan.score}
-                                    /100
+                                    {scan.score !== null &&
+                                    scan.score !== undefined
+                                      ? `${scan.score}/100`
+                                      : "—/100"}
                                   </p>
                                 </div>
 

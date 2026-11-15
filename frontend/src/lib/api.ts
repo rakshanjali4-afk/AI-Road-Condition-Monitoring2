@@ -12,6 +12,7 @@ export interface PredictResponse {
   condition: string;
   image_url: string;
   detections: Detection[];
+  score?: number | null;
 }
 
 export class ApiError extends Error {
@@ -119,15 +120,13 @@ export function buildImageUrl(imageUrl: string): string {
   return `${API_BASE_URL}${imageUrl}`;
 }
 
-export type ConditionLevel = "GOOD" | "MODERATE" | "BAD";
-
-export function normalizeCondition(condition: string): ConditionLevel {
-  const upper = condition.toUpperCase().trim();
-  if (upper === "GOOD") return "GOOD";
-  if (upper === "MODERATE") return "MODERATE";
-  if (upper === "BAD") return "BAD";
-  return "MODERATE";
-}
+export {
+  type ConditionLevel,
+  normalizeCondition,
+  computeRoadScore,
+  evaluateRoadCondition,
+  getConditionPresentation,
+} from "./roadCondition";
 
 export interface DetectionCounts {
   roadDamage: number;
@@ -136,12 +135,13 @@ export interface DetectionCounts {
   total: number;
 }
 
-export function countDetections(detections: Detection[]): DetectionCounts {
+export function countDetections(detections: Detection[] = []): DetectionCounts {
+  const safeDetections = Array.isArray(detections) ? detections : [];
   return {
-    roadDamage: detections.filter((d) => d.name === "RoadDamages").length,
-    speedBump: detections.filter((d) => d.name === "SpeedBump").length,
-    unsurfacedRoad: detections.filter((d) => d.name === "UnsurfacedRoad").length,
-    total: detections.length,
+    roadDamage: safeDetections.filter((d) => d?.name === "RoadDamages").length,
+    speedBump: safeDetections.filter((d) => d?.name === "SpeedBump").length,
+    unsurfacedRoad: safeDetections.filter((d) => d?.name === "UnsurfacedRoad").length,
+    total: safeDetections.length,
   };
 }
 
