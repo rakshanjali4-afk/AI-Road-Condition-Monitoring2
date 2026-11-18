@@ -84,7 +84,7 @@ def predict():
     image.save(image_path)
 
     # Run YOLO detection
-    results = model.predict(source=image_path, conf=0.05, save=False)
+    results = model.predict(source=image_path, conf=0.40,iou=0.45, save=False)
     
 
     result = results[0]
